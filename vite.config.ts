@@ -7,6 +7,9 @@ export default defineConfig({
     basicSsl(),
     react()
   ],
+  optimizeDeps: {
+    include: ['linked-dep'],
+  },
   build: {
     outDir: 'dist', // specify the output directory
     sourcemap: true, // generate source maps for easier debugging
@@ -14,6 +17,9 @@ export default defineConfig({
       output: {
         // customize the output format and structure if needed
       }
+    },
+    commonjsOptions: {
+      include: [/linked-dep/, /node_modules/],
     }
   }
 });

@@ -2,6 +2,8 @@ import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import axios from 'axios';
 
+const ludopediaUrl: string = import.meta.env.VITE_LUDOPEDIA_URL;
+
 const Authorized: React.FC = () => {
   const location = useLocation();
 
@@ -14,7 +16,7 @@ const Authorized: React.FC = () => {
     const code = getQueryParam('code');
     if (code) {
       // Execute the POST request with the code
-      axios.post('http://localhost:3000/tokenrequest', { code })
+      axios.post(`${ludopediaUrl}/tokenrequest`, { code })
         .then(response => {
           console.log(response.data);
           // Handle the response data here
@@ -31,7 +33,7 @@ const Authorized: React.FC = () => {
           else if (response.data.access_token) {
             // Save the token in local storage
             localStorage.setItem('ludo_token', `${response.data.token_type} ${response.data.access_token}`);
-            
+
             // Redirect to the home page
             window.location.href = window.location.origin;
           } else {
@@ -47,6 +49,7 @@ const Authorized: React.FC = () => {
         });
     }
   }, [location]);
+  return null;
 };
 
 export default Authorized;

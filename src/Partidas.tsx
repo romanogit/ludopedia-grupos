@@ -1,34 +1,60 @@
-import React, { useEffect, useState } from 'react';
-import DatePicker from 'react-datepicker';
-import 'react-datepicker/dist/react-datepicker.css';
-import { TableContainer, Table, TableHead, TableRow, TableCell, TableBody, Paper, Button } from '@material-ui/core';
+import React, { useEffect, useState } from 'react'
+import axios from 'axios'
+import DatePicker from 'react-datepicker'
+import 'react-datepicker/dist/react-datepicker.css'
+import { CircularProgress, TableContainer, Table, TableHead, TableRow, TableCell, TableBody, Paper, Button } from '@material-ui/core'
+import type { components } from './schema'
+import SetGroup from './SetGroup';
 
+type PartidaType = components["schemas"]["Partida"];
+
+const ludopediaUrl: string = import.meta.env.VITE_LUDOPEDIA_URL;
 
 const Partidas: React.FC<{ token: string }> = ({ token }) => {
-  const [data, setData] = useState<any[]>([]);
+  const [partidas, setPartidas] = useState<PartidaType[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
   const [initialDate, setInitialDate] = useState<Date | null>(new Date(new Date().getTime() - 30 * 24 * 60 * 60 * 1000));
-  const [endDate, setEndDate] = useState<Date | null>(new Date());
-    const [page, setPage] = useState<number>(1);
+  const [page, setPage] = useState<number>(1);
   const rows = 20;
   const [total, setTotal] = useState<number>(0);
 
   useEffect(() => {
-    fetchData();
+    fetchPartidas();
   }, [initialDate, page]);
 
-  const fetchData = async () => {
+  useEffect(() => {
+    fetchInfoPartidas(partidas);
+  }, [loading]);
+
+  const fetchInfoPartidas = async (partidas: PartidaType[]) => {
+    if (!loading) return;
+    const newPartidas = [...partidas];
+    for (var i = 0; i < newPartidas.length; i++) {
+      const partida = newPartidas[i];
+      const response = await axios.get(`${ludopediaUrl}/api/v1/partidas/${partida.id_partida}`, {
+        headers: {
+          Authorization: token,
+        },
+      })
+      newPartidas[i] = response.data;
+    }
+    setPartidas(newPartidas);
+    setLoading(false);
+  }
+
+  const fetchPartidas = async () => {
     try {
       const formattedDate = initialDate ? formatDate(initialDate) : '';
-      const url = `http://localhost:3000/api/v1/partidas?dt_ini=${formattedDate}&page=${page}&rows=${rows}`;
-      const response = await fetch(url, {
+      const url = `${ludopediaUrl}/api/v1/partidas?dt_ini=${formattedDate}&page=${page}&rows=${rows}`;
+      const response = await axios.get(url, {
         headers: {
           Authorization: token,
         },
       });
-      const jsonData = await response.json();
-      const { total, partidas } = jsonData;
-      setData(partidas);
+      const { total, partidas } = response.data;
+      setPartidas(partidas);
       setTotal(total);
+      setLoading(true);
     } catch (error) {
       console.error('Error fetching data:', error);
     }
@@ -47,6 +73,16 @@ const Partidas: React.FC<{ token: string }> = ({ token }) => {
     setPage(page - 1);
   };
 
+  const handleFirstPage = () => {
+    setPage(1);
+  };
+
+  const handleItemUpdated = (partida: PartidaType, index: number) => {
+    const newPartidas = [...partidas];
+    newPartidas[index] = partida;
+    setPartidas(newPartidas);
+  }
+
   const formatDate = (date: Date) => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -54,9 +90,16 @@ const Partidas: React.FC<{ token: string }> = ({ token }) => {
     return `${year}-${month}-${day}`;
   };
 
+  const getWeekday = (dateString: string): string => {
+    const date = new Date(dateString);
+    const weekdays = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
+    const weekdayIndex = date.getDay();
+    return weekdays[weekdayIndex];
+  };
+
   return (
     <div>
-      <h1>Partidas</h1>
+      <h2>Partidas</h2>
       <div style={{ display: 'flex', justifyContent: 'center' }}>
         <DatePicker
           selected={initialDate}
@@ -71,10 +114,13 @@ const Partidas: React.FC<{ token: string }> = ({ token }) => {
       </div>
       <div style={{ display: 'flex', justifyContent: 'center' }}>
         <div>
+          <Button onClick={handleFirstPage} disabled={page === 1}>
+            First
+          </Button>
           <Button onClick={handlePreviousPage} disabled={page === 1}>
             Previous
           </Button>
-          <span style={{ fontSize: '12px', color: 'red' }}>Page: {page}</span>
+          <span style={{ fontSize: '12px', color: 'red' }}>Page: {page} / {Math.ceil(total / rows)}</span>
           <Button onClick={handleNextPage} disabled={page * rows >= total}>
             Next
           </Button>
@@ -82,32 +128,56 @@ const Partidas: React.FC<{ token: string }> = ({ token }) => {
       </div>
       <TableContainer component={Paper}>
         <Table>
-          <TableHead>
+          <TableHead style={{ background: 'linear-gradient(to bottom, #e6f7ff, #b3e6ff)' }}>
             <TableRow>
+              <TableCell>#</TableCell>
               <TableCell>Thumb</TableCell>
               <TableCell>ID</TableCell>
               <TableCell>Data</TableCell>
               <TableCell>Jogo</TableCell>
               <TableCell>Duração</TableCell>
+              <TableCell>Jogadores</TableCell>
               <TableCell>Grupo</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {data.map((item, index) => (
+            {partidas.map((partida, index) => (
               <TableRow key={index}>
-                <TableCell>
-                  <img src={item.jogo.thumb} alt="Thumbnail" />
+                <TableCell>{(page - 1) * rows + index + 1}</TableCell>
+                <TableCell style={{ maxWidth: '50px' }}>
+                  <img src={partida.jogo.thumb} alt="Thumbnail" width="50px" />
                 </TableCell>
-                <TableCell>{item.id_partida}</TableCell>
-                <TableCell>{item.dt_partida}</TableCell>
-                <TableCell>{item.jogo.nm_jogo}</TableCell>
-                <TableCell>{item.duracao}</TableCell>
-                <TableCell>{item.grupo?.id_grupo_jogo} {item.grupo?.nm_grupo}</TableCell>
+                <TableCell>{partida.id_partida}</TableCell>
+                <TableCell>{partida.dt_partida} ({getWeekday(partida.dt_partida)})</TableCell>
+                <TableCell>{partida.jogo.nm_jogo}</TableCell>
+                <TableCell>{partida.duracao}</TableCell>
+                <TableCell style={{ maxWidth: '300px' }}>{partida.jogadores.map(j => j.nome).join(', ')}</TableCell>
+                <TableCell>
+                  {loading ? (
+                    <CircularProgress size={20} />
+                  ) : (
+                    <SetGroup token={token} partida={partida} index={index} handleItemUpdated={handleItemUpdated}/>
+                  )}
+                </TableCell>                
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </TableContainer>
+      <div style={{ display: 'flex', justifyContent: 'center' }}>
+        <div>
+          <Button onClick={handleFirstPage} disabled={page === 1}>
+            First
+          </Button>
+          <Button onClick={handlePreviousPage} disabled={page === 1}>
+            Previous
+          </Button>
+          <span style={{ fontSize: '12px', color: 'red' }}>Page: {page} / {Math.ceil(total / rows)}</span>
+          <Button onClick={handleNextPage} disabled={page * rows >= total}>
+            Next
+          </Button>
+        </div>
+      </div>
     </div>
   );
 };

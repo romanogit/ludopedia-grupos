@@ -2,13 +2,16 @@ import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import Partidas from './Partidas'
 
+const authorizedUrl: string = import.meta.env.VITE_CALLBACK_URL;
+const ludopediaUrl: string = import.meta.env.VITE_LUDOPEDIA_URL;
+
 const App: React.FC = () => {
   // State to track if the token exists
   const [hasToken, setHasToken] = useState<string>('');
 
   const authorize = () => {
       // Encode the following url with encodeURIComponent
-      const redirectUri = encodeURIComponent('https://localhost:5173/authorized');
+      const redirectUri = encodeURIComponent(authorizedUrl);
       const appId = '414d23bb9d22608d'
 
       window.location.href = `https://ludopedia.com.br/oauth?app_id=${appId}&redirect_uri=${redirectUri}`;    
@@ -22,7 +25,7 @@ const App: React.FC = () => {
       authorize();
     } else {
 
-      axios.get('http://localhost:3000/api/v1/me', {
+      axios.get(`${ludopediaUrl}/api/v1/me`, {
         headers: {
           Authorization: token
         }
