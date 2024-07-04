@@ -1179,6 +1179,7 @@ export interface components {
             expansoes: components["schemas"]["JogoResumo"][];
             /** @description Jogadores que participaram da partida. É necessário pelo menos 1 jogador no array. */
             jogadores: components["schemas"]["Jogador"][];
+            usuario: components["schemas"]["Usuario"];
         };
         Jogador: {
             /**

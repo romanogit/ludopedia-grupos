@@ -10,7 +10,7 @@ type PartidaType = components["schemas"]["Partida"];
 
 const ludopediaUrl: string = import.meta.env.VITE_LUDOPEDIA_URL;
 
-const Partidas: React.FC<{ token: string }> = ({ token }) => {
+const Partidas: React.FC<{ usuario: string, token: string }> = ({ usuario, token }) => {
   const [partidas, setPartidas] = useState<PartidaType[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [initialDate, setInitialDate] = useState<Date | null>(new Date(new Date().getTime() - 30 * 24 * 60 * 60 * 1000));
@@ -156,7 +156,7 @@ const Partidas: React.FC<{ token: string }> = ({ token }) => {
                   {loading ? (
                     <CircularProgress size={20} />
                   ) : (
-                    <SetGroup token={token} partida={partida} index={index} handleItemUpdated={handleItemUpdated}/>
+                    <SetGroup usuario={usuario} token={token} partida={partida} index={index} handleItemUpdated={handleItemUpdated}/>
                   )}
                 </TableCell>                
               </TableRow>

@@ -15,9 +15,10 @@ type RectProps = {
   token: string;
   partida: PartidaType;
   index: number;
+  usuario: string;
   handleItemUpdated: (partida: PartidaType, index: number) => void;
 };
-const SetGroup: React.FC<RectProps> = ({ index, partida, token, handleItemUpdated }) => {
+const SetGroup: React.FC<RectProps> = ({ index, partida, usuario, token, handleItemUpdated }) => {
   const calculateGroupChance = (partida: PartidaType) => {
     const total_jogadores = partida.jogadores.length;
     var count = 0;
@@ -55,10 +56,29 @@ const SetGroup: React.FC<RectProps> = ({ index, partida, token, handleItemUpdate
             (partida.jogadores.length >= 3 && calculateGroupChance(partida) >= 0.7) ||
             (partida.jogadores.length == 3 && calculateGroupChance(partida) >= 0.6)
           )
+          && (usuario === partida.usuario.usuario)
         ) && (
           <Button variant="contained" color="primary" onClick={() => handleSetGroup(partida)}>
             SET GRUPO {Math.round(calculateGroupChance(partida) * 100 * 100) / 100}%
           </Button>
+        )
+      }
+      {
+        // if item.jogadores.length is greater or equal to 3, check the calculateGroupChance
+        // if it is greater than 80%, show the button
+        (!partida.grupo?.id_grupo_jogo &&
+          (
+            (partida.jogadores.length >= 3 && calculateGroupChance(partida) >= 0.7) ||
+            (partida.jogadores.length == 3 && calculateGroupChance(partida) >= 0.6)
+          )
+          && (usuario !== partida.usuario.usuario)
+        ) && (
+          <div>{Math.round(calculateGroupChance(partida) * 100 * 100) / 100}% {partida.usuario.usuario}</div>
+        )
+      }
+      {
+        partida.grupo?.id_grupo_jogo && (
+          <div>{partida.grupo.nm_grupo}</div>
         )
       }
     </div>
